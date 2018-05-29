@@ -12,7 +12,7 @@ defmodule ExModem do
       :world
 
   """
-  def hello do
+  def start(_blah, _blah) do
     :world
   end
 end
