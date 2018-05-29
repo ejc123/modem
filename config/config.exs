@@ -1,30 +1,59 @@
 # This file is responsible for configuring your application
 # and its dependencies with the aid of the Mix.Config module.
+#
+# This configuration file is loaded before any dependency and
+# is restricted to this project.
 use Mix.Config
 
-# This configuration is loaded before any dependency and is restricted
-# to this project. If another project depends on this project, this
-# file won't be loaded nor affect the parent project. For this reason,
-# if you want to provide default values for your application for
-# 3rd-party users, it should be done in your "mix.exs" file.
+# Customize the firmware. Uncomment all or parts of the following
+# to add files to the root filesystem or modify the firmware
+# archive.
 
-# You can configure your application as:
-#
-#     config :ex_modem, key: :value
-#
-# and access this configuration in your application as:
-#
-#     Application.get_env(:ex_modem, :key)
-#
-# You can also configure a 3rd-party app:
-#
-#     config :logger, level: :info
-#
+config :nerves, :firmware, rootfs_overlay: "rootfs_overlay"
+#   fwup_conf: "config/fwup.conf"
 
-# It is also possible to import configuration files, relative to this
-# directory. For example, you can emulate configuration per environment
-# by uncommenting the line below and defining dev.exs, test.exs and such.
-# Configuration from the imported file will override the ones defined
-# here (which is why it is important to import them last).
-#
-#     import_config "#{Mix.env}.exs"
+config :logger, level: :info
+
+config :shoehorn,
+  init: [:nerves_runtime, :nerves_init_gadget],
+  app: Mix.Project.config()[:app]
+
+# Allows over the air updates via SSH.
+config :nerves_firmware_ssh,
+  authorized_keys: [
+    File.read!(Path.join(System.user_home!(), ".ssh/id_rsa.pub"))
+  ]
+
+# Allows for tailing of logs.
+config :logger, backends: [RingLogger]
+
+# Set a mdns domain and node_name to be able to remsh into the device.
+config :nerves_network, :default,
+  usb0: [
+    ipv4_address_method: :static,
+    ipv4_address: "192.168.24.1",
+    ipv4_subnet_mask: "255.255.0.0",
+    domain: "test.net",
+    nameservers: ["8.8.8.8"]
+  ]
+
+config :nerves_init_gadget,
+  ifname: "usb0",
+  ssh_console_port: 22
+
+#  ipv4_address: "192.168.24.1",
+#  ipv4_subnet_mask: "255.255.0.0",
+#  domain: "test.net",
+#  nameservers: ["8.8.8.8"]
+#  node_name: :blinky,
+#  mdns_domain: "blinky.local"
+
+# for Devices that don't support usb gadget such as raspberry pi 1, 2, and 3.
+# address_method: :dhcp,
+# ifname: "eth0"
+
+# Import target specific config. This must remain at the bottom
+# of this file so it overrides the configuration defined above.
+# Uncomment to use target specific configurations
+
+# import_config "#{Mix.Project.config()[:target]}.exs"
