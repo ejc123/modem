@@ -4,50 +4,54 @@ defmodule ExModem.GPS do
   @moduledoc """
     Set up and use GPS
   """
-
-  # Durations are in milliseconds
   @on_duration 3000
 
-  alias Nerves.UART
-  require Logger
+  import Logger
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, :ok, opts)
   end
 
-  @impl true
-  def init(state) do
-    tty = "ttyAMA0"
-    options = [speed: 115_200, active: true, framing: {Framing.Line, separator: "\r\n"}, id: :pid]
-    {uart_pid, gpio_pid, gps_pid} = start(tty, options)
-    {:ok, {uart_pid, gpio_pid, gps_pid, options}}
+  def start(pid) do
+    Genserver.cast(pid, :start)
   end
 
-  # GenServer callbacks
-  @impl true
-  def handle_call({:start, tty, options}, _from, state) do
-    {:noreply, state}
+  def stop(pid) do
+    Genserver.cast(pid, :stop)
   end
 
+  # Server
+
   @impl true
-  def handle_info(:start_gps, _from, {uart_pid, gpio_pid, gps_pid} = state) when gps_pid == 0 do
-    Logger.debug("***start_gps: #{inspect(state)}")
-    {:noreply, {uart_pid, gpio_pid, start_GPS(uart_pid)}}
+  def init({uart_pid, _} = _state) do
+    start_GPS(uart_pid)
+    schedule_work()
+    {:ok, {-1, false}}
   end
 
   @impl true
-  def handle_info(:start_gps, _from, {uart_pid, gpio_pid, gps_pid} = state) do
-    {:noreply, {uart_pid, gpio_pid, gps_pid}}
+  def handle_cast(:stop, {uart_pid, _} = _state) do
+    stop_GPS(uart_pid)
+    {:noreply, {uart_pid, true}}
   end
 
   @impl true
-  def handle_info(:stop_gps, _from, {uart_pid, gpio_pid, gps_pid} = state) do
-    stop_GPS({uart_pid, gps_pid})
-    {:noreply, {uart_pid, gpio_pid, 0}}
+  def handle_cast(:start, {uart_pid, _} = _state) do
+    start_GPS(uart_pid)
+    schedule_work()
+    {:noreply, {uart_pid, false}}
   end
 
-  # Handle messages from gps UART
   @impl true
+  def handle_info(:work, {uart_pid, stop?} = _state) do
+    get_gps_info(uart_pid)
+
+    unless stop? do
+      schedule_work()
+    end
+  end
+
+    @impl true
   def handle_info({:nerves_uart, _pid, <<_::binary-10>> <> "1,1," <> <<rest::binary>>}, state) do
     Logger.info("***Rec: #{inspect(rest)}")
     {:noreply, state}
@@ -71,70 +75,31 @@ defmodule ExModem.GPS do
     {:noreply, state}
   end
 
-  # private functions
-  defp start(tty, options) do
-    {:ok, gpio_pid} = ElixirALE.GPIO.start_link(4, :output)
-    toggle_power(gpio_pid)
-    :timer.sleep(1500)
-    toggle_power(gpio_pid)
-    # Pause to let modem reset before we query it
-    :timer.sleep(2000)
-
-    Logger.info("***start, gpio_pid: #{inspect(gpio_pid)}")
-    {:ok, uart_pid} = UART.start_link()
-    Logger.info("***start, uart_pid: #{inspect(uart_pid)}")
-
-    :ok =
-      UART.open(
-        uart_pid,
-        "ttyAMA0",
-        speed: 115_200,
-        active: true,
-        framing: {UART.Framing.Line, separator: "\r\n"},
-        id: :pid
-      )
-
-    Logger.debug("***UART open")
-    reset(uart_pid)
-    {uart_pid, gpio_pid, 0}
-  end
-
-  # Reset Modem
-  defp reset(pid) do
-    UART.write(pid, "ATZ")
-    :timer.sleep(500)
-  end
-
   # Power on GPS and start listener
   defp start_GPS(uart_pid) do
     UART.write(uart_pid, "AT+CGNSPWR=1")
     :timer.sleep(500)
-    Logger.info("***Spawning GPS loop...")
-    gps_pid = spawn(fn -> gps_loop(uart_pid) end)
-    Logger.info("***Listener started pid: #{gps_pid}...")
-    gps_pid
   end
 
-  defp stop_GPS({uart_pid, gps_pid}) do
+  defp stop_GPS({uart_pid, _gps_pid}) do
     UART.write(uart_pid, "AT+CGNSPWR=0")
     :timer.sleep(500)
-    Logger.info("***Stopping GPS loop...")
   end
 
   # Check state of GPS
-  defp check_GPS_state(uart_pid) do
-    UART.write(uart_pid, "AT+CGNSPWR?")
-  end
+  #  defp check_GPS_state(uart_pid) do
+  #    UART.write(uart_pid, "AT+CGNSPWR?")
+  #  end
 
   # Set echo off
-  defp echo_off(uart_pid) do
-    UART.write(uart_pid, "ATE0")
-  end
+  #  defp echo_off(uart_pid) do
+  #    UART.write(uart_pid, "ATE0")
+  #  end
 
   # Set echo on
-  defp echo_on(uart_pid) do
-    UART.write(uart_pid, "ATE0")
-  end
+  #  defp echo_on(uart_pid) do
+  #    UART.write(uart_pid, "ATE0")
+  #  end
 
   # Get GPS info
   # Here's what we get back
@@ -149,17 +114,7 @@ defmodule ExModem.GPS do
     UART.write(uart_pid, "AT+CGNSINF")
   end
 
-  defp gps_loop(uart_pid) do
-    get_gps_info(uart_pid)
-    :timer.sleep(@on_duration)
-    gps_loop(uart_pid)
-  end
-
-  defp toggle_power(gpio_pid) do
-    :ok = ElixirALE.GPIO.write(gpio_pid, 0)
-    :timer.sleep(100)
-    :ok = ElixirALE.GPIO.write(gpio_pid, 1)
-    :timer.sleep(100)
-    :ok = ElixirALE.GPIO.write(gpio_pid, 0)
+  defp schedule_work() do
+    Process.send_after(self(), :read, @on_duration)
   end
 end
