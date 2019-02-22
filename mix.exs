@@ -8,7 +8,7 @@ defmodule ExModem.MixProject do
       app: :ex_modem,
       version: "0.2.0",
       elixir: "~> 1.8",
-      archives: [nerves_bootstrap: "~> 1.0"],
+      archives: [nerves_bootstrap: "~> 1.4"],
       start_permanent: Mix.env() == :prod,
       build_embedded: Mix.target() != :host,
       aliases: [loadconfig: [&bootstrap/1]],
@@ -24,7 +24,7 @@ defmodule ExModem.MixProject do
 
   # Run "mix help compile.app" to learn about applications.
   def application do
-    [mod: {ExModem.Application, []}, extra_applications: [:logger]]
+    [mod: {ExModem.Application, []}, extra_applications: [:logger, :runtime_tools]]
   end
 
   # Run "mix help deps" to learn about dependencies.
@@ -32,20 +32,21 @@ defmodule ExModem.MixProject do
     [
       # Deps for all targets
       {:nerves, "~> 1.4", runtime: false},
-      {:shoehorn, "~> 0.2"},
+      {:shoehorn, "~> 0.4"},
+      {:ring_logger, "~> 0.6"},
       {:toolshed, "~> 0.2"},
 
       # Deps for all targets except :host
-      {:nerves_runtime, "~> 0.4", targets: @all_targets},
-      {:nerves_runtime_shell, "~> 0.1.0", targets: @all_targets},
-      {:nerves_uart, "~> 1.2.0", targets: @all_targets},
-      {:elixir_ale, "~>1.0", targets: @all_targets},
-      {:nerves_init_gadget, "~> 0.3.0", targets: @all_targets},
+      {:nerves_runtime, "~> 0.6", targets: @all_targets},
+#      {:nerves_runtime_shell, "~> 0.1.0", targets: @all_targets},
+      {:nerves_uart, "~> 1.2.1", targets: @all_targets},
+      {:elixir_ale, "~>1.2.1", targets: @all_targets},
+      {:nerves_init_gadget, "~> 0.6", targets: @all_targets},
 
       # Deps for specific targets
-      {:nerves_system_rpi, "~> 1.5", runtime: false, targets: :rpi},
-      {:nerves_system_rpi0, "~> 1.5", runtime: false, targets: :rpi0},
-      {:nerves_system_rpi3a, "~> 1.5", runtime: false, targets: :rpi3a},
+      {:nerves_system_rpi, "~> 1.6", runtime: false, targets: :rpi},
+      {:nerves_system_rpi0, "~> 1.6", runtime: false, targets: :rpi0},
+      {:nerves_system_rpi3a, "~> 1.6", runtime: false, targets: :rpi3a},
     ]
   end
 end

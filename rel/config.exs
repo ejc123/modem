@@ -27,8 +27,9 @@ end
 # will be used by default
 
 release :ex_modem do
-  set version: current_version(:ex_modem)
-  plugin Shoehorn
-  plugin Nerves
+  set(version: current_version(:ex_modem))
+  set(strip_debug_info: true)
+  plugin(Nerves)
+  plugin(Shoehorn)
 end
 
