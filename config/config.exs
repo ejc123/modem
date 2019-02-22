@@ -12,7 +12,7 @@ use Mix.Config
 config :nerves, :firmware, rootfs_overlay: "rootfs_overlay"
 #   fwup_conf: "config/fwup.conf"
 
-config :logger, level: :info
+config :logger, level: :debug
 
 config :shoehorn,
   init: [:nerves_runtime, :nerves_init_gadget],
@@ -27,19 +27,22 @@ config :nerves_firmware_ssh,
 # Allows for tailing of logs.
 config :logger, backends: [RingLogger]
 
+config :nerves_init_gadget,
+  ifname: "usb0",
+  ssh_console_port: 22,
+  address_method: :linklocal,
+  mdns_domain: "nerves.localhost",
+  node_name: nil,
+  node_host: :mdns_domain
+
 # Set a mdns domain and node_name to be able to remsh into the device.
 config :nerves_network, :default,
   usb0: [
     ipv4_address_method: :static,
     ipv4_address: "192.168.24.1",
     ipv4_subnet_mask: "255.255.0.0",
-    domain: "test.net",
     nameservers: ["8.8.8.8"]
   ]
-
-config :nerves_init_gadget,
-  ifname: "usb0",
-  ssh_console_port: 22
 
 #  ipv4_address: "192.168.24.1",
 #  ipv4_subnet_mask: "255.255.0.0",
@@ -56,4 +59,4 @@ config :nerves_init_gadget,
 # of this file so it overrides the configuration defined above.
 # Uncomment to use target specific configurations
 
-# import_config "#{Mix.Project.config()[:target]}.exs"
+# import_config "#{Mix.target()}.exs"
