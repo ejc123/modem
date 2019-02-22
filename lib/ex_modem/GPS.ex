@@ -6,18 +6,20 @@ defmodule ExModem.GPS do
   """
   @on_duration 3000
 
-  import Logger
+  require Logger
+  alias Nerves.UART
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, :ok, opts)
   end
 
   def start(pid) do
-    Genserver.cast(pid, :start)
+    Logger.debug("***start_GPS: #{inspect(pid)}")
+    GenServer.cast(pid, :start)
   end
 
   def stop(pid) do
-    Genserver.cast(pid, :stop)
+    GenServer.cast(pid, :stop)
   end
 
   # Server
@@ -115,6 +117,6 @@ defmodule ExModem.GPS do
   end
 
   defp schedule_work() do
-    Process.send_after(self(), :read, @on_duration)
+    Process.send_after(self(), :work, @on_duration)
   end
 end

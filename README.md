@@ -19,3 +19,16 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/ex_modem](https://hexdocs.pm/ex_modem).
 
+
+To install nerves_bootstrap:
+
+```shell
+mix archive.install hex nerves_bootstrap
+```
+
+Start minicom:
+
+```shell
+minicom -D /dev/ttyACM0 -b 115200 -C logFile
+```
+

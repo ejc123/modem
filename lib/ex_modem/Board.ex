@@ -1,7 +1,7 @@
 defmodule ExModem.Board do
   use GenServer
 
-  import ExModem.GPS
+  alias ExModem.GPS
 
   @moduledoc """
     Set up Modem/GPS board
