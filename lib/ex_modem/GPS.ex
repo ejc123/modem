@@ -24,28 +24,26 @@ defmodule ExModem.GPS do
 
   # Server
 
-  @impl true
-  @spec init({any, any}) :: {:ok, {-1, false}}
-  def init({uart_pid, _} = _state) do
-    start_GPS(uart_pid)
-    schedule_work()
+  @impl GenServer
+  @spec init(any) :: {:ok, {-1, false}}
+  def init(_state) do
     {:ok, {-1, false}}
   end
 
-  @impl true
+  @impl GenServer
   def handle_cast(:stop, {uart_pid, _} = _state) do
     stop_GPS(uart_pid)
     {:noreply, {uart_pid, true}}
   end
 
-  @impl true
+  @impl GenServer
   def handle_cast(:start, {uart_pid, _} = _state) do
     start_GPS(uart_pid)
     schedule_work()
     {:noreply, {uart_pid, false}}
   end
 
-  @impl true
+  @impl GenServer
   def handle_info(:work, {uart_pid, stop?} = _state) do
     get_gps_info(uart_pid)
 
@@ -54,25 +52,25 @@ defmodule ExModem.GPS do
     end
   end
 
-    @impl true
+  @impl GenServer
   def handle_info({:nerves_uart, _pid, <<_::binary-10>> <> "1,1," <> <<rest::binary>>}, state) do
     Logger.info("***Rec: #{inspect(rest)}")
     {:noreply, state}
   end
 
-  @impl true
+  @impl GenServer
   def handle_info({:nerves_uart, _pid, <<_::binary-10>> <> "1,0," <> <<rest::binary>>}, state) do
     Logger.info("***No Fix: #{inspect(rest)}")
     {:noreply, state}
   end
 
-  @impl true
+  @impl GenServer
   def handle_info({:nerves_uart, _pid, <<_::binary-10>> <> "0," <> <<rest::binary>>}, state) do
     Logger.info("***N/C: #{inspect(rest)}")
     {:noreply, state}
   end
 
-  @impl true
+  @impl GenServer
   def handle_info(message, state) do
     Logger.debug("Other message #{inspect(message)}")
     {:noreply, state}

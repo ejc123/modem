@@ -2,6 +2,7 @@ defmodule ExModem.Board do
   use GenServer
 
   alias ExModem.GPS
+  alias Circuits.UART
   alias Circuits.GPIO
 
   @moduledoc """
@@ -12,14 +13,13 @@ defmodule ExModem.Board do
   # Durations are in milliseconds
   @on_duration 3000
 
-  alias Circuits.UART
   require Logger
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, :ok, opts)
   end
 
-  @impl true
+  @impl GenServer
   def init(_state) do
     tty = "ttyAMA0"
     options = [speed: 115_200, active: true, framing: {Framing.Line, separator: "\r\n"}, id: :pid]
@@ -28,26 +28,33 @@ defmodule ExModem.Board do
   end
 
   # GenServer callbacks
-  @impl true
+  @impl GenServer
   def handle_call({:start, _tty, _options}, _from, state) do
     {:noreply, state}
   end
 
-  @impl true
+  @impl GenServer
   def handle_info(:start_gps, {uart_pid, gpio, gps_pid} = state) when gps_pid == 0 do
     Logger.debug("***start_gps: #{inspect(state)}")
     {:noreply, {uart_pid, gpio, GPS.start(uart_pid)}}
   end
 
-  @impl true
+  @impl GenServer
   def handle_info(:start_gps, {uart_pid, gpio, gps_pid} = _state) do
     {:noreply, {uart_pid, gpio, gps_pid}}
   end
 
-  @impl true
+  @impl GenServer
   def handle_info(:stop_gps, {uart_pid, gpio, gps_pid} = _state) do
     GPS.stop({uart_pid, gps_pid})
     {:noreply, {uart_pid, gpio, 0}}
+  end
+
+  @impl GenServer
+  def handle_info(msg, state) do
+    Logger.debug("***circuits: #{inspect(msg)}")
+    Logger.debug("***circuits: #{inspect(state)}")
+    {:noreply, state}
   end
 
   # Handle messages from gps UART

@@ -8,8 +8,8 @@ defmodule ExModem.Application do
 
     # Define children
     children = [
-      ExModem.GPS,
-      ExModem.Board
+      ExModem.Board,
+      ExModem.GPS
     ]
 
     opts = [strategy: :one_for_one, name: ExModem.Supervisor]
