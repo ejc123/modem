@@ -7,7 +7,7 @@ defmodule ExModem.GPS do
   @on_duration 3000
 
   require Logger
-  alias Nerves.UART
+  alias Circuits.UART
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, :ok, opts)
@@ -25,6 +25,7 @@ defmodule ExModem.GPS do
   # Server
 
   @impl true
+  @spec init({any, any}) :: {:ok, {-1, false}}
   def init({uart_pid, _} = _state) do
     start_GPS(uart_pid)
     schedule_work()

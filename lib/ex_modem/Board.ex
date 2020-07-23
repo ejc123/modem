@@ -2,6 +2,7 @@ defmodule ExModem.Board do
   use GenServer
 
   alias ExModem.GPS
+  alias Circuits.GPIO
 
   @moduledoc """
     Set up Modem/GPS board
@@ -11,7 +12,7 @@ defmodule ExModem.Board do
   # Durations are in milliseconds
   @on_duration 3000
 
-  alias Nerves.UART
+  alias Circuits.UART
   require Logger
 
   def start_link(opts) do
@@ -22,8 +23,8 @@ defmodule ExModem.Board do
   def init(_state) do
     tty = "ttyAMA0"
     options = [speed: 115_200, active: true, framing: {Framing.Line, separator: "\r\n"}, id: :pid]
-    {uart_pid, gpio_pid, gps_pid} = start(tty, options)
-    {:ok, {uart_pid, gpio_pid, gps_pid, options}}
+    {uart_pid, gpio, gps_pid} = start(tty, options)
+    {:ok, {uart_pid, gpio, gps_pid, options}}
   end
 
   # GenServer callbacks
@@ -33,20 +34,20 @@ defmodule ExModem.Board do
   end
 
   @impl true
-  def handle_info(:start_gps, {uart_pid, gpio_pid, gps_pid} = state) when gps_pid == 0 do
+  def handle_info(:start_gps, {uart_pid, gpio, gps_pid} = state) when gps_pid == 0 do
     Logger.debug("***start_gps: #{inspect(state)}")
-    {:noreply, {uart_pid, gpio_pid, GPS.start(uart_pid)}}
+    {:noreply, {uart_pid, gpio, GPS.start(uart_pid)}}
   end
 
   @impl true
-  def handle_info(:start_gps, {uart_pid, gpio_pid, gps_pid} = _state) do
-    {:noreply, {uart_pid, gpio_pid, gps_pid}}
+  def handle_info(:start_gps, {uart_pid, gpio, gps_pid} = _state) do
+    {:noreply, {uart_pid, gpio, gps_pid}}
   end
 
   @impl true
-  def handle_info(:stop_gps, {uart_pid, gpio_pid, gps_pid} = _state) do
+  def handle_info(:stop_gps, {uart_pid, gpio, gps_pid} = _state) do
     GPS.stop({uart_pid, gps_pid})
-    {:noreply, {uart_pid, gpio_pid, 0}}
+    {:noreply, {uart_pid, gpio, 0}}
   end
 
   # Handle messages from gps UART
@@ -54,14 +55,14 @@ defmodule ExModem.Board do
 
   # private functions
   defp start(_tty, _options) do
-    {:ok, gpio_pid} = ElixirALE.GPIO.start_link(4, :output)
-    toggle_power(gpio_pid)
+    {:ok, gpio} = GPIO.open(4, :output)
+    toggle_power(gpio)
     :timer.sleep(1500)
-    toggle_power(gpio_pid)
+    toggle_power(gpio)
     # Pause to let modem reset before we query it
     :timer.sleep(2000)
 
-    Logger.info("***start, gpio_pid: #{inspect(gpio_pid)}")
+    Logger.info("***start, gpio_pid: #{inspect(gpio)}")
     {:ok, uart_pid} = UART.start_link()
     Logger.info("***start, uart_pid: #{inspect(uart_pid)}")
 
@@ -77,7 +78,7 @@ defmodule ExModem.Board do
 
     Logger.debug("***UART open")
     reset(uart_pid)
-    {uart_pid, gpio_pid, 0}
+    {uart_pid, gpio, 0}
   end
 
   # Reset Modem
@@ -86,11 +87,11 @@ defmodule ExModem.Board do
     :timer.sleep(500)
   end
 
-  defp toggle_power(gpio_pid) do
-    :ok = ElixirALE.GPIO.write(gpio_pid, 0)
+  defp toggle_power(gpio) do
+    :ok = GPIO.write(gpio, 0)
     :timer.sleep(100)
-    :ok = ElixirALE.GPIO.write(gpio_pid, 1)
+    :ok = GPIO.write(gpio, 1)
     :timer.sleep(100)
-    :ok = ElixirALE.GPIO.write(gpio_pid, 0)
+    :ok = GPIO.write(gpio, 0)
   end
 end
