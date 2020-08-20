@@ -1,4 +1,4 @@
-import Config
+use Mix.Config
 
 # Use shoehorn to start the main applications.  See the shoehorn
 # docs for separating out critical OTP applications such as those
@@ -8,7 +8,7 @@ config :shoehorn,
   init: [:nerves_runtime, :nerves_pack],
   app: Mix.Project.config()[:app]
 
-config :nerves_runtime, :kernel, user_system_registry: false
+config :nerves_runtime, :kernel, use_system_registry: false
 
 config :nerves,
   erlinit: [
@@ -35,11 +35,19 @@ if keys == [],
 config :nerves_firmware_ssh,
   authorized_keys: Enum.map(keys, &File.read!/1)
 
-config :vintage_net, 
-  regulatory_domain: "US",
+config :vintage_net, regulatory_domain: "US",
   config: [
     {"usb0", %{type: VintageNetDirect}},
-    {"wlan0", %{type: VintageNetWiFi}}
+    {"wlan0", %{type: VintageNetWiFi,
+      vintage_net_wifi: %{
+        key_mgmt: :wpa_psk,
+        mode: :client,
+        ssid: System.get_env("NERVES_NETWORK_SSID"),
+        psk:  System.get_env("NERVES_NETWORK_PSK"),
+      },
+      ipv4: %{method: :dhcp}
+      }
+    }
   ]
 
 

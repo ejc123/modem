@@ -2,8 +2,6 @@ defmodule ExModem.Board do
   use GenServer
 
   alias ExModem.GPS
-  alias Circuits.UART
-  alias Circuits.GPIO
 
   @moduledoc """
     Set up Modem/GPS board
@@ -22,7 +20,7 @@ defmodule ExModem.Board do
   @impl GenServer
   def init(_state) do
     tty = "ttyAMA0"
-    options = [speed: 115_200, active: true, framing: {Framing.Line, separator: "\r\n"}, id: :pid]
+    options = [speed: 115_200, active: true, framing: {Circuits.UART.Framing.Line, separator: "\r\n"}, id: :pid]
     {uart_pid, gpio, gps_pid} = start(tty, options)
     {:ok, {uart_pid, gpio, gps_pid, options}}
   end
@@ -52,7 +50,7 @@ defmodule ExModem.Board do
 
   @impl GenServer
   def handle_info(msg, state) do
-    Logger.debug("***circuits: #{inspect(msg)}")
+    Logger.info("***circuits: #{inspect(msg)}")
     Logger.debug("***circuits: #{inspect(state)}")
     {:noreply, state}
   end
@@ -61,8 +59,8 @@ defmodule ExModem.Board do
 
 
   # private functions
-  defp start(_tty, _options) do
-    {:ok, gpio} = GPIO.open(4, :output)
+  defp start(tty, options) do
+    {:ok, gpio} = Circuits.GPIO.open(4, :output)
     toggle_power(gpio)
     :timer.sleep(1500)
     toggle_power(gpio)
@@ -70,18 +68,21 @@ defmodule ExModem.Board do
     :timer.sleep(2000)
 
     Logger.info("***start, gpio_pid: #{inspect(gpio)}")
-    {:ok, uart_pid} = UART.start_link()
+    {:ok, uart_pid} = Circuits.UART.start_link()
     Logger.info("***start, uart_pid: #{inspect(uart_pid)}")
 
     :ok =
-      UART.open(
+      Circuits.UART.open(
         uart_pid,
-        "ttyAMA0",
-        speed: 115_200,
-        active: true,
-        framing: {UART.Framing.Line, separator: "\r\n"},
-        id: :pid
-      )
+    #    "ttyAMA0",
+        tty,
+        options)
+
+    #    speed: 115_200,
+    #    active: true,
+    #    framing: {Circuits.UART.Framing.Line, separator: "\r\n"},
+    #    id: :pid
+    #  )
 
     Logger.debug("***UART open")
     reset(uart_pid)
@@ -90,15 +91,15 @@ defmodule ExModem.Board do
 
   # Reset Modem
   defp reset(pid) do
-    UART.write(pid, "ATZ")
+    Circuits.UART.write(pid, "ATZ")
     :timer.sleep(500)
   end
 
   defp toggle_power(gpio) do
-    :ok = GPIO.write(gpio, 0)
+    :ok = Circuits.GPIO.write(gpio, 0)
     :timer.sleep(100)
-    :ok = GPIO.write(gpio, 1)
+    :ok = Circuits.GPIO.write(gpio, 1)
     :timer.sleep(100)
-    :ok = GPIO.write(gpio, 0)
+    :ok = Circuits.GPIO.write(gpio, 0)
   end
 end

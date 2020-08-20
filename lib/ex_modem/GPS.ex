@@ -4,18 +4,17 @@ defmodule ExModem.GPS do
   @moduledoc """
     Set up and use GPS
   """
-  @on_duration 3000
+  @on_duration 5000
 
   require Logger
   alias Circuits.UART
 
-  def start_link(opts) do
-    GenServer.start_link(__MODULE__, :ok, opts)
-  end
+  def start_link, do: start_link([])
+  def start_link(opts), do: GenServer.start_link(__MODULE__, opts, name: {:global, ExModem.GPS})
 
   def start(pid) do
     Logger.debug("***start_GPS: #{inspect(pid)}")
-    GenServer.cast(pid, :start)
+    GenServer.cast(self(), {:start, pid})
   end
 
   def stop(pid) do
@@ -37,7 +36,7 @@ defmodule ExModem.GPS do
   end
 
   @impl GenServer
-  def handle_cast(:start, {uart_pid, _} = _state) do
+  def handle_cast({:start, uart_pid}, _state) do
     start_GPS(uart_pid)
     schedule_work()
     {:noreply, {uart_pid, false}}
