@@ -10,16 +10,16 @@ defmodule ExModem.GPS do
   alias Circuits.UART
 
   def start_link, do: start_link([])
-  def start_link(opts), do: GenServer.start_link(__MODULE__, opts, name: {:global, ExModem.GPS})
+  def start_link(opts), do: GenServer.start_link(__MODULE__, opts, name: :gps)
 
   def start(pid) do
     Logger.debug("***GPS: start self PID: #{inspect(self())}")
     Logger.debug("***GPS: start GPS PID: #{inspect(ExModem.GPS)}")
-    GenServer.cast({:global, ExModem.GPS}, {:start, pid})
+    GenServer.cast(:gps, {:start, pid})
   end
 
   def stop() do
-    GenServer.cast({:global, ExModem.GPS}, {:stop})
+    GenServer.cast(:gps, {:stop})
   end
 
   # Server

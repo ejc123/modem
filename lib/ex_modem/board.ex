@@ -10,10 +10,16 @@ defmodule ExModem.Board do
   """
   require Logger
 
-  def start_link(opts), do: GenServer.start_link(__MODULE__, opts, name: {:global, Board})
+  def start_link(opts), do: GenServer.start_link(__MODULE__, opts, name: :board)
 
   @impl GenServer
   def init(_state) do
+    {:ok, {0, 0, 0, 0}, {:continue, :start}}
+  end
+
+  # GenServer callbacks
+  @impl GenServer
+  def handle_continue(:start, _state) do
     tty = "ttyAMA0"
 
     options = [
@@ -22,25 +28,27 @@ defmodule ExModem.Board do
       framing: {UART.Framing.Line, separator: "\r\n"},
       id: :pid
     ]
-
     {uart_pid, gpio, gps_pid} = start(tty, options)
-    {:ok, {uart_pid, gpio, gps_pid}}
+    {:noreply, {uart_pid, gpio, gps_pid}}
   end
 
-  # GenServer callbacks
   @impl GenServer
-  def handle_call({:start, _tty, _options}, _from, state) do
+  def handle_cast(:start_listener, {uart_pid, _gpio, _gps_pid} = state) do
+    Logger.info("***Board starting listener")
+    UART.controlling_process(uart_pid, Process.whereis(:listener))
     {:noreply, state}
   end
 
+
   @impl GenServer
   def handle_cast(:start_gps, {uart_pid, gpio, gps_pid} = state) when gps_pid == 0 do
-    Logger.debug("***start_gps: #{inspect(state)}")
+    Logger.info("***start_gps: #{inspect(state)}")
     {:noreply, {uart_pid, gpio, GPS.start(uart_pid)}}
   end
 
   @impl GenServer
   def handle_cast(:start_gps, {uart_pid, gpio, gps_pid} = _state) do
+    Logger.info("***Board start_gps")
     {:noreply, {uart_pid, gpio, gps_pid}}
   end
 
@@ -49,33 +57,6 @@ defmodule ExModem.Board do
     GPS.stop()
     {:noreply, {uart_pid, gpio, 0}}
   end
-
-  @impl GenServer
-  def handle_info({:circuits_uart, _pid, <<_::binary-10>> <> "1,1," <> <<rest::binary>>}, state) do
-    Logger.info("***Rec: #{inspect(rest)}")
-    {:noreply, state}
-  end
-
-  @impl GenServer
-  def handle_info({:circuits_uart, _pid, <<_::binary-10>> <> "1,0," <> <<rest::binary>>}, state) do
-    Logger.info("***No Fix: #{inspect(rest)}")
-    {:noreply, state}
-  end
-
-  @impl GenServer
-  def handle_info({:circuits_uart, _pid, <<_::binary-10>> <> "0," <> <<rest::binary>>}, state) do
-    Logger.info("***N/C: #{inspect(rest)}")
-    {:noreply, state}
-  end
-
-  @impl GenServer
-  def handle_info(msg, state) do
-    Logger.info("***circuits: #{inspect(msg)}")
-    Logger.debug("***circuits: #{inspect(state)}")
-    {:noreply, state}
-  end
-
-  # Handle messages from gps UART
 
   # private functions
   defp start(_tty, _options) do
