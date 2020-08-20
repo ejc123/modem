@@ -9,5 +9,4 @@ defmodule ExModem.Listener do
     Logger.debug("Listener Started, PID: #{inspect(self())}")
     {:ok, {-1, false}}
   end
-
 end

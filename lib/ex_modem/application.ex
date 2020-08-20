@@ -12,7 +12,7 @@ defmodule ExModem.Application do
     children = [
       ExModem.Board,
       ExModem.GPS,
-      #ExModem.Listener,
+      ExModem.Listener,
     ]
 
     opts = [strategy: :one_for_one, name: ExModem.Supervisor]

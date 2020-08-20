@@ -53,6 +53,7 @@ defmodule ExModem.GPS do
     unless stop? do
       schedule_work()
     end
+
     {:noreply, state}
   end
 
