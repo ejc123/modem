@@ -13,12 +13,13 @@ defmodule ExModem.GPS do
   def start_link(opts), do: GenServer.start_link(__MODULE__, opts, name: {:global, ExModem.GPS})
 
   def start(pid) do
-    Logger.debug("***start_GPS: #{inspect(pid)}")
-    GenServer.cast(self(), {:start, pid})
+    Logger.debug("***GPS: start self PID: #{inspect(self())}")
+    Logger.debug("***GPS: start GPS PID: #{inspect(ExModem.GPS)}")
+    GenServer.cast({:global, ExModem.GPS}, {:start, pid})
   end
 
-  def stop(pid) do
-    GenServer.cast(pid, :stop)
+  def stop() do
+    GenServer.cast({:global, ExModem.GPS}, {:stop})
   end
 
   # Server
@@ -26,6 +27,7 @@ defmodule ExModem.GPS do
   @impl GenServer
   @spec init(any) :: {:ok, {-1, false}}
   def init(_state) do
+    Logger.debug("***GPS: init PID: #{inspect(self())}")
     {:ok, {-1, false}}
   end
 
@@ -37,41 +39,26 @@ defmodule ExModem.GPS do
 
   @impl GenServer
   def handle_cast({:start, uart_pid}, _state) do
+    Logger.debug("***GPS :start")
     start_GPS(uart_pid)
     schedule_work()
     {:noreply, {uart_pid, false}}
   end
 
   @impl GenServer
-  def handle_info(:work, {uart_pid, stop?} = _state) do
+  def handle_info(:work, {uart_pid, stop?} = state) do
+    Logger.debug("***GPS :work")
     get_gps_info(uart_pid)
 
     unless stop? do
       schedule_work()
     end
-  end
-
-  @impl GenServer
-  def handle_info({:nerves_uart, _pid, <<_::binary-10>> <> "1,1," <> <<rest::binary>>}, state) do
-    Logger.info("***Rec: #{inspect(rest)}")
-    {:noreply, state}
-  end
-
-  @impl GenServer
-  def handle_info({:nerves_uart, _pid, <<_::binary-10>> <> "1,0," <> <<rest::binary>>}, state) do
-    Logger.info("***No Fix: #{inspect(rest)}")
-    {:noreply, state}
-  end
-
-  @impl GenServer
-  def handle_info({:nerves_uart, _pid, <<_::binary-10>> <> "0," <> <<rest::binary>>}, state) do
-    Logger.info("***N/C: #{inspect(rest)}")
     {:noreply, state}
   end
 
   @impl GenServer
   def handle_info(message, state) do
-    Logger.debug("Other message #{inspect(message)}")
+    Logger.info("Other message #{inspect(message)}")
     {:noreply, state}
   end
 
@@ -115,6 +102,7 @@ defmodule ExModem.GPS do
   end
 
   defp schedule_work() do
+    Logger.debug("***GPS schedule_work")
     Process.send_after(self(), :work, @on_duration)
   end
 end

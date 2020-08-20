@@ -17,7 +17,7 @@ config :nerves,
 
 # Authorize the device to receive firmware using public key.
 
-keys = 
+keys =
   [
     Path.join([System.user_home!(), ".ssh", "id_rsa.pub"]),
     Path.join([System.user_home!(), ".ssh", "id_nerves_ecdsa.pub"])
