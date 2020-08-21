@@ -19,7 +19,7 @@ defmodule ExModem.GPS do
   end
 
   def stop() do
-    GenServer.cast(:gps, {:stop})
+    GenServer.cast(:gps, :stop)
   end
 
   # Server
