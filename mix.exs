@@ -58,7 +58,7 @@ defmodule ExModem.MixProject do
       {:nerves_firmware_ssh, "~> 0.2", targets: @all_targets},
 
       # Deps for specific targets
-      {:nerves_system_rpi0, "~> 1.11", runtime: false, targets: :rpi0},
+#      {:nerves_system_rpi0, "~> 1.11", runtime: false, targets: :rpi0},
       # nerves: [compile: true]}
       {:custom_rpi0, path: "../custom_rpi0", runtime: false, targets: :custom_rpi0}
     ]

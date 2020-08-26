@@ -28,6 +28,7 @@ defmodule ExModem.Board do
       framing: {UART.Framing.Line, separator: "\r\n"},
       id: :pid
     ]
+
     {uart_pid, gpio, gps_pid} = start(tty, options)
     {:noreply, {uart_pid, gpio, gps_pid}}
   end
@@ -36,9 +37,9 @@ defmodule ExModem.Board do
   def handle_cast(:start_listener, {uart_pid, _gpio, _gps_pid} = state) do
     Logger.info("***Board starting listener")
     UART.controlling_process(uart_pid, Process.whereis(:listener))
+    Nerves.Runtime.validate_firmware()
     {:noreply, state}
   end
-
 
   @impl GenServer
   def handle_cast(:start_gps, {uart_pid, gpio, gps_pid} = state) when gps_pid == 0 do
