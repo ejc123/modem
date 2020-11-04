@@ -3,7 +3,9 @@ defmodule ExModem.GPS do
 
   @moduledoc """
     Set up and use GPS
-  """ @on_duration 5000 require Logger
+  """
+  @on_duration 5000
+  require Logger
   alias Circuits.UART
 
   def start_link, do: start_link([])

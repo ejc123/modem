@@ -2,8 +2,7 @@ defmodule ExModem.Board do
   use GenServer
 
   alias ExModem.GPS
-  alias Circuits.UART
-  alias Circuits.GPIO
+  import Circuits {UART, GPIO}
 
   @moduledoc """
     Set up Modem/GPS board
