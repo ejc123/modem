@@ -17,5 +17,6 @@ defmodule ExModem.Application do
 
     opts = [strategy: :one_for_one, name: ExModem.Supervisor]
     Supervisor.start_link(children, opts)
+    Nerves.Runtime.validate_firmware()
   end
 end

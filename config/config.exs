@@ -6,9 +6,9 @@ config :nerves, :firmware, rootfs_overlay: "rootfs_overlay"
 
 config :nerves, source_date_epoch: "1595447983"
 
-config :logger, backends: [RingLogger], level: :info
+config :nerves, rpi_v2_ack: true
 
-# node_name = if Mix.env() != :prod, do: "exmodem"
+config :logger, backends: [RingLogger], level: :debug
 
 if Mix.target() != :host do
   import_config "target.exs"

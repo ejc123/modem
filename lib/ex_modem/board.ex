@@ -38,6 +38,7 @@ defmodule ExModem.Board do
     Logger.info("***Board starting listener")
     UART.controlling_process(uart_pid, Process.whereis(:listener))
     Nerves.Runtime.validate_firmware()
+    GenServer.cast(self(), :start_gps)
     {:noreply, state}
   end
 

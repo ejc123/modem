@@ -1,0 +1,28 @@
+ cmd("aplay -q /etc/test.wav")
+
+ alias Circuits.GPIO
+ alias Circuits.UART
+
+ {:ok, uart_pid} = UART.start_link()
+ ExModem.Listener.start_link([])
+ UART.open(uart_pid, "ttyAMA0", speed: 115_200, active: true, framing: {UART.Framing.Line, separator: "\r\n"}, id: :pid)
+
+
+## Set up calling line presentation (caller id)
+UART.write(uart_pid, "AT+CLIP=1")
+
+## Incoming call
+***circuits: {:circuits_uart, #PID<0.2313.0>, "RING"}
+## with CLIP
+04:57:23.768 [debug] ***circuits: {:circuits_uart, #PID<0.2313.0>, "RING"}
+04:57:23.781 [debug] ***circuits: {:circuits_uart, #PID<0.2313.0>, ""}
+04:57:23.782 [debug] ***circuits: {:circuits_uart, #PID<0.2313.0>, "+CLIP: \"17012057389\",129,\"\",0,\"\",0"}
+
+## Answer call
+UART.write(uart_pid, "ATA")
+
+## Play audio
+cmd("aplay -q /etc/test.wav")
+
+## end call
+UART.write(uart_pid, "ATH")

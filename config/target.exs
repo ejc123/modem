@@ -1,6 +1,4 @@
-use Mix.Config
-
-config :nerves, rpi_v2_ack: true
+import Config
 
 # Use shoehorn to start the main applications.  See the shoehorn
 # docs for separating out critical OTP applications such as those
@@ -34,7 +32,7 @@ if keys == [],
     See your project's config.exs for this error message.
     """)
 
-config :nerves_firmware_ssh,
+config :nerves_ssh,
   authorized_keys: Enum.map(keys, &File.read!/1)
 
 config :vintage_net, regulatory_domain: "US",

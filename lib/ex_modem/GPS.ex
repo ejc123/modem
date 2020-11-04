@@ -3,10 +3,7 @@ defmodule ExModem.GPS do
 
   @moduledoc """
     Set up and use GPS
-  """
-  @on_duration 5000
-
-  require Logger
+  """ @on_duration 5000 require Logger
   alias Circuits.UART
 
   def start_link, do: start_link([])
@@ -69,7 +66,7 @@ defmodule ExModem.GPS do
     :timer.sleep(500)
   end
 
-  defp stop_GPS({uart_pid, _gps_pid}) do
+  defp stop_GPS(uart_pid) do
     UART.write(uart_pid, "AT+CGNSPWR=0")
     :timer.sleep(500)
   end
