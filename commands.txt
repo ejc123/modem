@@ -3,6 +3,10 @@
  alias Circuits.GPIO
  alias Circuits.UART
 
+ ## RESET MODEM
+ AT+CFUN=0
+ AT+CFUN=1
+
  {:ok, uart_pid} = UART.start_link()
  ExModem.Listener.start_link([])
  UART.open(uart_pid, "ttyAMA0", speed: 115_200, active: true, framing: {UART.Framing.Line, separator: "\r\n"}, id: :pid)
@@ -26,3 +30,21 @@ cmd("aplay -q /etc/test.wav")
 
 ## end call
 UART.write(uart_pid, "ATH")
+
+## SMS
+## Set to TEXT mode
+AT+CMGF=1
+## Read current message
+AT+CMGR=1
+## Show all messages
+AT+CMGL="ALL"  # might need to escape quotes
+
+## IP
+AT+CIPSTART="TCP","google.com",80
+
+
+## Signal Strength
+AT+CSQ
+
+##
+
