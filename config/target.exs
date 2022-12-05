@@ -47,7 +47,7 @@ config :vintage_net, regulatory_domain: "US",
       },
       ipv4: %{method: :dhcp}
       }
-    }
+    },
   ]
 
 
