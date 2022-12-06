@@ -3,7 +3,7 @@ defmodule ExModem.MixProject do
 
   @app :ex_modem
   @version "0.3.0"
-  @all_targets [:modem_rpi0, :rpi0]
+  @all_targets [:modem_rpi0, :rpi0, :custom_rpi3]
 
   def project do
     [
@@ -66,6 +66,7 @@ defmodule ExModem.MixProject do
 #      {:nerves_system_rpi0, "~> 1.21.1", runtime: false, targets: :rpi0},
 #      {:modem_rpi0, path: "../modem_rpi0", runtime: false, targets: :modem_rpi0}
 #      {:modem_rpi0, path: "../modem_rpi0", runtime: false, targets: :modem_rpi0},
+      {:custom_rpi3, github: "ejc123/custom_rpi3", branch: "1.21.1", runtime: false, targets: :custom_rpi3},
       {:modem_rpi0, github: "ejc123/modem_rpi0", tag: "v1.21.1-local", runtime: false, targets: :modem_rpi0},
     ]
   end
